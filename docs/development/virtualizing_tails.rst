@@ -8,7 +8,7 @@ perform a fully virtualized production install, you will need to first set up
 Tails in a virtual machine.
 
 .. note:: For the instructions that follow, you need to download the most
-          recent Tails ISO from the `Tails`_ website.
+          recent Tails ISO from the `Tails`_ website. (v. 4.18 at the time of writing: 2021-04-19)
 
 .. _`Tails`: https://tails.boum.org
 
@@ -71,51 +71,55 @@ to Tails, and enter an administration password and start Tails.
 
 .. code:: Diff
 
-  --- /usr/lib/python2.7/dist-packages/tails_installer/creator.py      2018-01-22 14:59:40.000000000 +0100
-  +++ /usr/lib/python2.7/dist-packages/tails_installer/creator.py.mod  2018-03-05 05:15:00.000000000 -0800
-  @@ -595,16 +595,6 @@ class LinuxTailsInstallerCreator(TailsInstallerCreator):
-                   self.log.debug('Skipping non-removable device: %s'
-                                  % data['device'])
+   *** /usr/lib/python3/dist-packages/tails_installer/creator.py	  2021-04-19 14:19:38.000000000 +0000
+   --- /usr/lib/python3/dist-packages/tails_installer/creator.py.mod 2021-05-12 11:47:35.151671314 +0000
+   ***************
+   *** 167,182 ****
+                     self.log.debug('Skipping non-removable device: %s'
+                                    % data['device'])
 
-  -            # Only pay attention to USB and SDIO devices, unless --force'd
-  -            iface = drive.props.connection_bus
-  -            if iface != 'usb' and iface != 'sdio' \
-  -               and self.opts.force != data['device']:
-  -                self.log.warning(
-  -                    "Skipping device '%(device)s' connected to '%(interface)s' interface"
-  -                    % {'device': data['udi'], 'interface': iface}
-  -                )
-  -                continue
-  -
+   -             # Only pay attention to USB and SDIO devices, unless --force'd
+   -             iface = drive.props.connection_bus
+   -             if iface != 'usb' and iface != 'sdio' \
+   -                and self.opts.force != data['device']:
+   -                 self.log.warning(
+   -                     'Skipping device "%(device)s" connected to "%(interface)s" interface'
+   -                     % {'device': data['udi'], 'interface': iface}
+   -                 )
+   -                 continue
+   -
                # Skip optical drives
                if data['is_optical'] and self.opts.force != data['device']:
-                   self.log.debug('Skipping optical device: %s' % data['device'])
-  --- /usr/lib/python2.7/dist-packages/tails_installer/gui.py      2018-01-22 14:59:40.000000000 +0100
-  +++ /usr/lib/python2.7/dist-packages/tails_installer/gui.py.mod  2018-03-05 05:15:00.000000000 -0800
-  @@ -568,16 +568,6 @@ class TailsInstallerWindow(Gtk.ApplicationWindow):
-                       self.devices_with_persistence.append(info['parent'])
-                       continue
-                   pretty_name = self.get_device_pretty_name(info)
-  -                # Skip devices with non-removable bit enabled
-  -                if not info['removable']:
-  -                    message =_('The USB stick "%(pretty_name)s"'
-  -                               ' is configured as non-removable by its'
-  -                               ' manufacturer and Tails will fail to start on it.'
-  -                               ' Please try installing on a different model.') % {
-  -                               'pretty_name':  pretty_name
-  -                               }
-  -                    self.status(message)
-  -                    continue
-                   # Skip too small devices, but inform the user
-                   if not info['is_device_big_enough_for_installation']:
-                       message =_('The device "%(pretty_name)s"'
+                     self.log.debug('Skipping optical device: %s' % data['device'])
+   --- 167,172 ----
+   *** /usr/lib/python3/dist-packages/tails_installer/gui.py	2021-04-19 14:19:38.000000000 +0000
+   --- /usr/lib/python3/dist-packages/tails_installer/gui.py.mod	2021-05-12 11:47:52.284233778 +0000
+   ***************
+   *** 463,478 ****
+                        self.devices_with_persistence.append(info['parent'])
+                        continue
+                     pretty_name = self.get_device_pretty_name(info)
+   -                 # Skip devices with non-removable bit enabled
+   -                 if not info['removable']:
+   -                     message = _('The USB stick "%(pretty_name)s"'
+   -                                 ' is configured as non-removable by its'
+   -                                 ' manufacturer and Tails will fail to start from it.'
+   -                                 ' Please try installing on a different model.') % {
+   -                                 'pretty_name':  pretty_name
+   -                                 }
+   -                     self.status(message)
+   -                     continue
+                     # Skip too small devices, but inform the user
+                     if not info['is_device_big_enough_for_installation']:
+                        message = _('The device "%(pretty_name)s"'
+   --- 463,468 ----
 
 2. Now run the following two commands in a Terminal in your Tails VM:
 
 .. code:: sh
 
   sudo patch -p0 -d/ < installer.patch
-  sudo /usr/bin/python -tt /usr/bin/tails-installer -u -n --clone -P -m -x
+  sudo /usr/local/bin/tails-installer -u -n --clone -P -m -x
 
 3. The **Tails Installer** will appear. Click **Install Tails**.
 4. Once complete, navigate to **Applications**, **Utilities** and open **Disks**.
@@ -146,28 +150,27 @@ Now in your booted Tails VM you should:
 
 .. code:: Diff
 
-   --- /usr/share/perl5/Tails/Persistence/Setup.pm	2017-06-30 09:56:25.000000000 +0000
-   +++ /usr/share/perl5/Tails/Persistence/Setup.pm.mod	2017-07-20 07:17:48.472000000 +0000
-   @@ -404,19 +404,6 @@
+   --- /usr/local/share/perl/5.28.1/Tails/Persistence/Setup.pm	2021-04-19 14:19:38.000000000 +0000
+   +++ /usr/local/share/perl/5.28.1/Tails/Persistence/Setup.pm.mod	2021-05-12 21:03:43.187827559 +0000
+   @@ -439,18 +439,6 @@
 
-        my @checks = (
+      my @checks = (
             {
    -            method  => 'drive_is_connected_via_a_supported_interface',
-   -            message => $self->encoding->decode(gettext(
-   -                "Tails is running from non-USB / non-SDIO device %s.")),
+   -            message =>
+   -                __"Tails is running from non-USB / non-SDIO device.",
    -            needs_drive_arg => 1,
    -        },
    -        {
    -            method  => 'drive_is_optical',
-   -            message => $self->encoding->decode(gettext(
-   -                "Device %s is optical.")),
+   -            message => __"Device is optical.",
    -            must_be_false    => 1,
    -            needs_drive_arg => 1,
    -        },
    -        {
-                method  => 'started_from_device_installed_with_tails_installer',
-                message => $self->encoding->decode(gettext(
-                    "Device %s was not created using Tails Installer.")),
+               method  => 'started_from_device_installed_with_tails_installer',
+               message =>
+                  __"Device was not created using a USB image or Tails Installer.",
 
 3. To apply the patch, from the Terminal run:
 
@@ -176,8 +179,10 @@ Now in your booted Tails VM you should:
   sudo patch -p0 -d/ < persistence.patch
 
 4. Navigate to **Applications** then **Tails** and click **Configure
-   persistent volume**. Configure a persistent volume enabling all persistence
+   persistent volume**. Configure a persistent volume adding a password and enabling all persistence
    options.
+
+5. Restart the virtual machine
 
 Shared Folders
 ~~~~~~~~~~~~~~
@@ -194,7 +199,7 @@ Shared Folders
 
 .. code:: sh
 
-  mkdir ~/Persistent/securedrop
+  mkdir ~/Persistent/securedrop -p
   echo 'if [ ! -d ~/Persistent/securedrop/install_files ]; then sudo mount -t vboxsf -o uid=$UID,gid=$(id -g) securedrop ~/Persistent/securedrop; fi' >> /live/persistence/TailsData_unlocked/dotfiles/.bashrc
 
 The first time you open a Terminal in that session you will be prompted for your
