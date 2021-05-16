@@ -21,6 +21,13 @@ anonymous sources.
    passphrase_best_practices
 
 .. toctree::
+   :caption: Tutorial
+   :name: tutorialtoc
+   :maxdepth: 2
+
+   quick_evaluation.rst
+
+.. toctree::
    :caption: Install SecureDrop
    :name: installtoc
    :maxdepth: 2
